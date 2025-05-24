@@ -1,33 +1,41 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { votingKeys } = require('../utils/fileStorage');
 const router = express.Router();
 
 // Admin login
 router.post('/admin/login', async (req, res) => {
   try {
-    const { password } = req.body;
+    const { username, password } = req.body;
     
-    if (password === process.env.ADMIN_PASSWORD) {
-      const token = jwt.sign(
-        { isAdmin: true },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-      
-      res.json({
-        success: true,
-        token,
-        message: 'Admin login successful'
-      });
-    } else {
-      res.status(401).json({
+    if (!username || !password) {
+      return res.status(400).json({
         success: false,
-        message: 'Invalid admin password'
+        message: 'Username and password are required'
       });
     }
+    
+    if (username !== 'admin' || password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+    
+    const token = jwt.sign(
+      { isAdmin: true, username: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      success: true,
+      token,
+      message: 'Admin login successful'
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Admin login error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -38,10 +46,10 @@ router.post('/admin/login', async (req, res) => {
 // Validate voting key
 router.post('/validate-key', async (req, res) => {
   try {
-    const { key, votingKey } = req.body; // Accept both parameter names
-    const keyToValidate = key || votingKey; // Use whichever is provided
+    const { key, votingKey } = req.body;
+    const keyToValidate = key || votingKey;
     
-    console.log('Key validation request:', { key, votingKey, keyToValidate }); // Debug log
+    console.log('Key validation request:', { key, votingKey, keyToValidate });
     
     if (!keyToValidate || keyToValidate.length !== 32) {
       return res.status(400).json({
@@ -50,10 +58,9 @@ router.post('/validate-key', async (req, res) => {
       });
     }
     
-    const VotingKey = require('../models/VotingKey');
-    const foundKey = await VotingKey.findOne({ key: keyToValidate.trim() });
+    const foundKey = await votingKeys.findByKey(keyToValidate.trim());
     
-    console.log('Key lookup result:', foundKey ? 'Found' : 'Not found'); // Debug log
+    console.log('Key lookup result:', foundKey ? 'Found' : 'Not found');
     
     if (!foundKey) {
       return res.status(404).json({
@@ -69,7 +76,6 @@ router.post('/validate-key', async (req, res) => {
       });
     }
     
-    // Generate a temporary token for voting
     const token = jwt.sign(
       { keyId: foundKey._id, votingKey: keyToValidate },
       process.env.JWT_SECRET,

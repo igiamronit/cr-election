@@ -18,7 +18,7 @@ const ensureDataDir = async () => {
   }
 };
 
-// Generic file operations
+// Generic file operation
 const readFile = async (filename) => {
   try {
     await ensureDataDir();
