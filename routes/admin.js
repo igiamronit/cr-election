@@ -174,15 +174,20 @@ router.post('/candidates', verifyAdmin, async (req, res) => {
 // Start/Stop voting session
 router.post('/voting-session', verifyAdmin, async (req, res) => {
   try {
-    const { action } = req.body; // 'start' or 'stop'
+    const { action } = req.body;
     const VotingSession = require('../models/VotingSession');
     
     if (action === 'start') {
-      // End any existing active session
-      await VotingSession.updateMany({ isActive: true }, { 
-        isActive: false, 
-        endTime: new Date() 
-      });
+      // First, end any existing active sessions
+      await VotingSession.updateMany(
+        { isActive: true }, 
+        { 
+          isActive: false, 
+          endTime: new Date() 
+        }
+      );
+      
+      console.log('Creating new voting session...'); // Debug log
       
       // Create new session
       const newSession = new VotingSession({
@@ -193,30 +198,35 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
       
       await newSession.save();
       
+      console.log('New session created:', newSession); // Debug log
+      
       res.json({
         success: true,
-        message: 'Voting session started',
+        message: 'Voting session started successfully',
         session: newSession
       });
       
     } else if (action === 'stop') {
-      const session = await VotingSession.findOne({ isActive: true });
+      // Find and stop the active session
+      const activeSession = await VotingSession.findOne({ isActive: true });
       
-      if (!session) {
+      if (!activeSession) {
         return res.status(400).json({
           success: false,
           message: 'No active voting session found'
         });
       }
       
-      session.isActive = false;
-      session.endTime = new Date();
-      await session.save();
+      activeSession.isActive = false;
+      activeSession.endTime = new Date();
+      await activeSession.save();
+      
+      console.log('Session stopped:', activeSession); // Debug log
       
       res.json({
         success: true,
-        message: 'Voting session stopped',
-        session
+        message: 'Voting session stopped successfully',
+        session: activeSession
       });
       
     } else {
@@ -227,7 +237,7 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
     }
     
   } catch (error) {
-    console.error(error);
+    console.error('Voting session error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

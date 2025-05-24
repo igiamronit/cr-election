@@ -34,20 +34,28 @@ const VotingPage = () => {
   };
 
   const checkVotingSession = async () => {
-    try {
-      setSessionLoading(true);
-      // Use the results endpoint to get session info
-      const response = await axios.get('http://localhost:5000/api/votes/results');
-      if (response.data.success) {
-        setVotingSession(response.data.session);
-      }
-    } catch (error) {
-      console.error('Error checking voting session:', error);
+  try {
+    setSessionLoading(true);
+    // Use the dedicated session status endpoint instead of results
+    const response = await axios.get('http://localhost:5000/api/session-status');
+    
+    console.log('Session check response:', response.data); // Debug log
+    
+    if (response.data.success) {
+      setVotingSession({
+        isActive: response.data.isActive,
+        ...response.data.session
+      });
+    } else {
       setVotingSession({ isActive: false });
-    } finally {
-      setSessionLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error checking voting session:', error);
+    setVotingSession({ isActive: false });
+  } finally {
+    setSessionLoading(false);
+  }
+};
 
   const validateKey = async (e) => {
     e.preventDefault();

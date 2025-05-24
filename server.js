@@ -43,19 +43,34 @@ app.get('/api/session-status', async (req, res) => {
   try {
     const VotingSession = require('./models/VotingSession');
     
-    const activeSession = await VotingSession.findOne({ isActive: true });
+    // Find the most recent active session
+    const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
+    
+    // If no active session, get the latest session for reference
+    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 });
+    
+    const sessionData = activeSession || latestSession;
     
     res.json({
       success: true,
       isActive: !!activeSession,
-      session: activeSession || null
+      session: sessionData ? {
+        _id: sessionData._id,
+        isActive: sessionData.isActive,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        totalVotes: sessionData.totalVotes,
+        createdAt: sessionData.createdAt
+      } : null
     });
     
   } catch (error) {
-    console.error(error);
+    console.error('Session status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error',
+      isActive: false,
+      session: null
     });
   }
 });

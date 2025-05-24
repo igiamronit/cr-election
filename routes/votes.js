@@ -110,17 +110,28 @@ router.get('/results', async (req, res) => {
     const VotingSession = require('../models/VotingSession');
     
     const candidates = await Candidate.find().sort({ votes: -1 });
-    const session = await VotingSession.findOne({ isActive: true }); // Only get active session
-    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 }); // Get latest for fallback
+    
+    // Use the same logic as the session-status endpoint
+    const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 });
+    
+    const sessionData = activeSession || latestSession;
     
     res.json({
       success: true,
       candidates,
-      session: session || latestSession || { totalVotes: 0, isActive: false }
+      session: sessionData ? {
+        _id: sessionData._id,
+        isActive: sessionData.isActive,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        totalVotes: sessionData.totalVotes,
+        createdAt: sessionData.createdAt
+      } : { isActive: false, totalVotes: 0 }
     });
     
   } catch (error) {
-    console.error(error);
+    console.error('Results error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
