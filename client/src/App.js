@@ -9,7 +9,7 @@ import ResultsPage from './components/ResultsPage';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/cr-election">
       <div className="App">
         <Routes>
           <Route path="/" element={<HomePage />} />
