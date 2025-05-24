@@ -110,12 +110,35 @@ router.get('/results', async (req, res) => {
     const VotingSession = require('../models/VotingSession');
     
     const candidates = await Candidate.find().sort({ votes: -1 });
-    const session = await VotingSession.findOne().sort({ createdAt: -1 });
+    const session = await VotingSession.findOne({ isActive: true }); // Only get active session
+    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 }); // Get latest for fallback
     
     res.json({
       success: true,
       candidates,
-      session: session || { totalVotes: 0, isActive: false }
+      session: session || latestSession || { totalVotes: 0, isActive: false }
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// Add a specific endpoint to check session status
+router.get('/session-status', async (req, res) => {
+  try {
+    const VotingSession = require('../models/VotingSession');
+    
+    const activeSession = await VotingSession.findOne({ isActive: true });
+    
+    res.json({
+      success: true,
+      session: activeSession || { isActive: false },
+      isActive: !!activeSession
     });
     
   } catch (error) {

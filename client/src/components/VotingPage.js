@@ -10,17 +10,24 @@ const VotingPage = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [votingSession, setVotingSession] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCandidates();
     checkVotingSession();
+    
+    // Check session status every 10 seconds
+    const interval = setInterval(checkVotingSession, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchCandidates = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/candidates');
-      setCandidates(response.data.candidates);
+      if (response.data.success) {
+        setCandidates(response.data.candidates);
+      }
     } catch (error) {
       setMessage('Error fetching candidates');
     }
@@ -28,10 +35,17 @@ const VotingPage = () => {
 
   const checkVotingSession = async () => {
     try {
+      setSessionLoading(true);
+      // Use the results endpoint to get session info
       const response = await axios.get('http://localhost:5000/api/votes/results');
-      setVotingSession(response.data.session);
+      if (response.data.success) {
+        setVotingSession(response.data.session);
+      }
     } catch (error) {
       console.error('Error checking voting session:', error);
+      setVotingSession({ isActive: false });
+    } finally {
+      setSessionLoading(false);
     }
   };
 
@@ -50,7 +64,7 @@ const VotingPage = () => {
     setLoading(true);
     try {
       const response = await axios.post('http://localhost:5000/api/auth/validate-key', {
-        votingKey: votingKey.trim()
+        key: votingKey.trim() // Changed from votingKey to key to match backend
       });
 
       if (response.data.success) {
@@ -94,6 +108,22 @@ const VotingPage = () => {
     }
   };
 
+  if (sessionLoading) {
+    return (
+      <div className="container">
+        <div className="card">
+          <div className="header">
+            <h1>🗳️ Voting</h1>
+            <p>Checking voting session status...</p>
+          </div>
+          <div className="loading">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!votingSession?.isActive) {
     return (
       <div className="container">
@@ -106,18 +136,29 @@ const VotingPage = () => {
             <button onClick={() => navigate('/')} className="btn">
               ← Back to Home
             </button>
+            <button 
+              onClick={checkVotingSession} 
+              className="btn btn-secondary"
+              style={{ marginLeft: '10px' }}
+            >
+              🔄 Refresh Status
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
+  // Rest of your component remains the same...
   return (
     <div className="container">
       <div className="card">
         <div className="header">
           <h1>🗳️ Cast Your Vote</h1>
           <p>Enter your voting key to access the ballot</p>
+          <div style={{ fontSize: '0.9rem', color: '#28a745' }}>
+            ✅ Voting session is active
+          </div>
         </div>
 
         {message && (

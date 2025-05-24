@@ -38,6 +38,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
+// Add this to your routes in server.js or create a new route file
+app.get('/api/session-status', async (req, res) => {
+  try {
+    const VotingSession = require('./models/VotingSession');
+    
+    const activeSession = await VotingSession.findOne({ isActive: true });
+    
+    res.json({
+      success: true,
+      isActive: !!activeSession,
+      session: activeSession || null
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
