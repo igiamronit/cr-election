@@ -1,7 +1,7 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { sessions } = require('./utils/fileStorage');
 
 dotenv.config();
 
@@ -11,27 +11,18 @@ const app = express();
 app.use(cors({
   origin: [
     'https://igiamronit.github.io',
-    'https://cr-election-uk6a.onrender.com'
+    'https://igiamronit.github.io/cr-election',
+    'https://cr-election-uk6a.onrender.com',
+    'http://localhost:3000'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
+
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/anonymous-voting', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB successfully');
-});
-
-// Routes - with error handling
+// Routes
 try {
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/votes', require('./routes/votes'));
@@ -46,27 +37,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// Session status endpoint (add this near your other API routes)
+// Session status endpoint
 app.get('/api/session-status', async (req, res) => {
   try {
-    const VotingSession = require('./models/VotingSession');
-    
-    // Find the most recent active session
-    const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const activeSession = await sessions.getActive();
     
     console.log('Session status check - active session found:', !!activeSession);
     
     res.json({
       success: true,
       isActive: !!activeSession,
-      session: activeSession ? {
-        _id: activeSession._id,
-        isActive: activeSession.isActive,
-        startTime: activeSession.startTime,
-        endTime: activeSession.endTime,
-        totalVotes: activeSession.totalVotes,
-        createdAt: activeSession.createdAt
-      } : { isActive: false }
+      session: activeSession || { isActive: false }
     });
     
   } catch (error) {
@@ -90,6 +71,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('Using file-based storage (no MongoDB required)');
 });
 
 

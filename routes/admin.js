@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { votingKeys, candidates, votes, sessions } = require('../utils/fileStorage');
 
 // Middleware to verify admin token
 const verifyAdmin = (req, res, next) => {
@@ -78,26 +79,21 @@ router.post('/login', async (req, res) => {
 // Generate voting keys
 router.post('/generate-keys', verifyAdmin, async (req, res) => {
   try {
-    const VotingKey = require('../models/VotingKey');
-    
     // Clear existing keys
-    await VotingKey.deleteMany({});
+    await votingKeys.deleteAll();
     
     // Generate 36 unique keys
     const keys = [];
     for (let i = 0; i < 36; i++) {
       const key = crypto.randomBytes(16).toString('hex');
-      keys.push({ key });
+      await votingKeys.add(key);
+      keys.push(key);
     }
-    
-    await VotingKey.insertMany(keys);
-    
-    const allKeys = await VotingKey.find({}, 'key');
     
     res.json({
       success: true,
       message: '36 voting keys generated successfully',
-      keys: allKeys.map(k => k.key)
+      keys
     });
     
   } catch (error) {
@@ -112,16 +108,14 @@ router.post('/generate-keys', verifyAdmin, async (req, res) => {
 // Get all voting keys with status
 router.get('/keys', verifyAdmin, async (req, res) => {
   try {
-    const VotingKey = require('../models/VotingKey');
-    const keys = await VotingKey.find({});
+    const allKeys = await votingKeys.getAll();
     
     res.json({
       success: true,
-      keys
+      keys: allKeys
     });
     
   } catch (error) {
-    console.error(error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -132,29 +126,16 @@ router.get('/keys', verifyAdmin, async (req, res) => {
 // Create/Update candidates
 router.post('/candidates', verifyAdmin, async (req, res) => {
   try {
-    const { candidates } = req.body;
-    const Candidate = require('../models/Candidate');
+    const { candidates: candidatesList } = req.body;
     
-    if (!candidates || !Array.isArray(candidates) || candidates.length > 3) {
+    if (!candidatesList || !Array.isArray(candidatesList) || candidatesList.length > 3) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide up to 3 candidates'
+        message: 'Please provide 1-3 candidates'
       });
     }
     
-    // Clear existing candidates
-    await Candidate.deleteMany({});
-    
-    // Create new candidates
-    const newCandidates = candidates.map((candidate, index) => ({
-      name: candidate.name,
-      description: candidate.description || '',
-      photo: candidate.photo || '',
-      position: index + 1,
-      votes: 0
-    }));
-    
-    await Candidate.insertMany(newCandidates);
+    const newCandidates = await candidates.replaceAll(candidatesList);
     
     res.json({
       success: true,
@@ -175,30 +156,13 @@ router.post('/candidates', verifyAdmin, async (req, res) => {
 router.post('/voting-session', verifyAdmin, async (req, res) => {
   try {
     const { action } = req.body;
-    const VotingSession = require('../models/VotingSession'); // Fixed path - removed the dot
     
-    console.log(`Voting session ${action} requested`); // Debug log
+    console.log(`Voting session ${action} requested`);
     
     if (action === 'start') {
-      // First, end any existing active sessions
-      await VotingSession.updateMany(
-        { isActive: true }, 
-        { 
-          isActive: false, 
-          endTime: new Date() 
-        }
-      );
+      const newSession = await sessions.create();
       
-      // Create new session
-      const newSession = new VotingSession({
-        isActive: true,
-        startTime: new Date(),
-        totalVotes: 0
-      });
-      
-      await newSession.save();
-      
-      console.log('New voting session created:', newSession._id); // Debug log
+      console.log('New voting session created:', newSession._id);
       
       res.json({
         success: true,
@@ -207,26 +171,21 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
       });
       
     } else if (action === 'stop') {
-      // Find and stop the active session
-      const activeSession = await VotingSession.findOne({ isActive: true });
+      const stoppedSession = await sessions.stop();
       
-      if (!activeSession) {
+      if (!stoppedSession) {
         return res.status(400).json({
           success: false,
           message: 'No active voting session found'
         });
       }
       
-      activeSession.isActive = false;
-      activeSession.endTime = new Date();
-      await activeSession.save();
-      
-      console.log('Voting session stopped:', activeSession._id); // Debug log
+      console.log('Voting session stopped:', stoppedSession._id);
       
       res.json({
         success: true,
         message: 'Voting session stopped successfully',
-        session: activeSession
+        session: stoppedSession
       });
       
     } else {
@@ -248,16 +207,14 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
 // Get voting statistics
 router.get('/stats', verifyAdmin, async (req, res) => {
   try {
-    const VotingKey = require('../models/VotingKey');
-    const Vote = require('../models/Vote');
-    const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession'); // Fixed path
+    const allKeys = await votingKeys.getAll();
+    const allVotes = await votes.getAll();
+    const allCandidates = await candidates.getAll();
+    const currentSession = await sessions.getActive();
     
-    const totalKeys = await VotingKey.countDocuments();
-    const usedKeys = await VotingKey.countDocuments({ used: true });
-    const totalVotes = await Vote.countDocuments();
-    const candidates = await Candidate.find().sort({ votes: -1 });
-    const currentSession = await VotingSession.findOne().sort({ createdAt: -1 });
+    const totalKeys = allKeys.length;
+    const usedKeys = allKeys.filter(k => k.used).length;
+    const totalVotes = allVotes.length;
     
     res.json({
       success: true,
@@ -266,7 +223,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
         usedKeys,
         remainingKeys: totalKeys - usedKeys,
         totalVotes,
-        candidates,
+        candidates: allCandidates.sort((a, b) => b.votes - a.votes),
         currentSession: currentSession || null
       }
     });
@@ -283,17 +240,11 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 // Reset all data
 router.post('/reset', verifyAdmin, async (req, res) => {
   try {
-    const VotingKey = require('../models/VotingKey');
-    const Vote = require('../models/Vote');
-    const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession'); // Fixed path
-    
-    // Clear all data
     await Promise.all([
-      VotingKey.deleteMany({}),
-      Vote.deleteMany({}),
-      Candidate.deleteMany({}),
-      VotingSession.deleteMany({})
+      votingKeys.deleteAll(),
+      votes.deleteAll(),
+      candidates.deleteAll(),
+      sessions.deleteAll()
     ]);
     
     res.json({
