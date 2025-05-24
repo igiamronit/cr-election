@@ -33,7 +33,7 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/stats', getAuthHeaders());
+      const response = await axios.get('https://cr-election-uk6a.onrender.com/api/admin/stats', getAuthHeaders());
       setStats(response.data.stats);
     } catch (error) {
       setMessage('Error fetching statistics');
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
 
   const fetchKeys = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/keys', getAuthHeaders());
+      const response = await axios.get('https://cr-election-uk6a.onrender.com/api/admin/keys', getAuthHeaders());
       setKeys(response.data.keys);
     } catch (error) {
       setMessage('Error fetching keys');
@@ -52,7 +52,7 @@ const AdminDashboard = () => {
   const generateKeys = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/generate-keys', {}, getAuthHeaders());
+      const response = await axios.post('https://cr-election-uk6a.onrender.com/api/admin/generate-keys', {}, getAuthHeaders());
       if (response.data.success) {
         setMessage('36 new voting keys generated successfully!');
         fetchKeys();
@@ -122,7 +122,7 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/admin/candidates',
+        'https://cr-election-uk6a.onrender.com/api/admin/candidates',
         { candidates: validCandidates },
         getAuthHeaders()
       );
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/admin/voting-session',
+        'https://cr-election-uk6a.onrender.com/api/admin/voting-session',
         { action },
         getAuthHeaders()
       );
@@ -165,7 +165,7 @@ const AdminDashboard = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/reset', {}, getAuthHeaders());
+      const response = await axios.post('https://cr-election-uk6a.onrender.com/api/admin/reset', {}, getAuthHeaders());
       if (response.data.success) {
         setMessage('All data reset successfully!');
         fetchStats();

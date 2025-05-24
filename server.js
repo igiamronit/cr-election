@@ -8,7 +8,12 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://cr-election-uk6a.onrender.com'
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 // MongoDB connection
@@ -38,7 +43,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// Update the session-status endpoint to be more consistent
+// Session status endpoint (add this near your other API routes)
 app.get('/api/session-status', async (req, res) => {
   try {
     const VotingSession = require('./models/VotingSession');
@@ -46,7 +51,7 @@ app.get('/api/session-status', async (req, res) => {
     // Find the most recent active session
     const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
     
-    console.log('Session status check - active session found:', !!activeSession); // Debug log
+    console.log('Session status check - active session found:', !!activeSession);
     
     res.json({
       success: true,
