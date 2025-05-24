@@ -175,7 +175,7 @@ router.post('/candidates', verifyAdmin, async (req, res) => {
 router.post('/voting-session', verifyAdmin, async (req, res) => {
   try {
     const { action } = req.body;
-    const VotingSession = require('./models/VotingSession');
+    const VotingSession = require('../models/VotingSession'); // Fixed path - removed the dot
     
     console.log(`Voting session ${action} requested`); // Debug log
     
@@ -251,7 +251,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     const VotingKey = require('../models/VotingKey');
     const Vote = require('../models/Vote');
     const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession');
+    const VotingSession = require('../models/VotingSession'); // Fixed path
     
     const totalKeys = await VotingKey.countDocuments();
     const usedKeys = await VotingKey.countDocuments({ used: true });
@@ -286,7 +286,7 @@ router.post('/reset', verifyAdmin, async (req, res) => {
     const VotingKey = require('../models/VotingKey');
     const Vote = require('../models/Vote');
     const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession');
+    const VotingSession = require('../models/VotingSession'); // Fixed path
     
     // Clear all data
     await Promise.all([

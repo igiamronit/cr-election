@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
 
-const VotingSessionSchema = new mongoose.Schema({
+const votingSessionSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
-    default: false
+    default: false,
+    required: true
   },
   startTime: {
     type: Date,
-    default: null
+    default: Date.now
   },
   endTime: {
     type: Date,
@@ -21,4 +22,7 @@ const VotingSessionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('VotingSession', VotingSessionSchema);
+// Ensure only one active session at a time
+votingSessionSchema.index({ isActive: 1 });
+
+module.exports = mongoose.model('VotingSession', votingSessionSchema);
