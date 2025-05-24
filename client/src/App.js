@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import HomePage from './components/HomePage';
 import VotingPage from './components/VotingPage';
@@ -9,7 +9,7 @@ import ResultsPage from './components/ResultsPage';
 
 function App() {
   return (
-    <Router basename="/cr-election">
+    <Router>
       <div className="App">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -17,8 +17,6 @@ function App() {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/results" element={<ResultsPage />} />
-          {/* Catch all route */}
-          <Route path="*" element={<HomePage />} />
         </Routes>
       </div>
     </Router>
