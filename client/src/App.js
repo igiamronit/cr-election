@@ -17,6 +17,8 @@ function App() {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/results" element={<ResultsPage />} />
+          {/* Catch all route */}
+          <Route path="*" element={<HomePage />} />
         </Routes>
       </div>
     </Router>
