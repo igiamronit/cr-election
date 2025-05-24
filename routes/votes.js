@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { votingKeys, candidates, votes, sessions } = require('../utils/fileStorage');
 
 // Middleware to verify voting token
 const verifyVotingToken = (req, res, next) => {
@@ -30,13 +31,9 @@ const verifyVotingToken = (req, res, next) => {
 router.post('/cast', verifyVotingToken, async (req, res) => {
   try {
     const { candidateId } = req.body;
-    const VotingKey = require('../models/VotingKey');
-    const Vote = require('../models/Vote');
-    const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession');
     
     // Check if voting session is active
-    const session = await VotingSession.findOne().sort({ createdAt: -1 });
+    const session = await sessions.getActive();
     if (!session || !session.isActive) {
       return res.status(400).json({
         success: false,
@@ -45,7 +42,8 @@ router.post('/cast', verifyVotingToken, async (req, res) => {
     }
     
     // Verify candidate exists
-    const candidate = await Candidate.findById(candidateId);
+    const allCandidates = await candidates.getAll();
+    const candidate = allCandidates.find(c => c._id === candidateId);
     if (!candidate) {
       return res.status(404).json({
         success: false,
@@ -57,7 +55,7 @@ router.post('/cast', verifyVotingToken, async (req, res) => {
     const keyHash = bcrypt.hashSync(req.voter.votingKey, 10);
     
     // Check if this key has already voted
-    const existingVote = await Vote.findOne({ keyHash });
+    const existingVote = await votes.findByKeyHash(keyHash);
     if (existingVote) {
       return res.status(400).json({
         success: false,
@@ -66,28 +64,13 @@ router.post('/cast', verifyVotingToken, async (req, res) => {
     }
     
     // Mark the voting key as used
-    await VotingKey.findByIdAndUpdate(req.voter.keyId, {
-      used: true,
-      usedAt: new Date()
-    });
+    await votingKeys.markAsUsed(req.voter.votingKey);
     
     // Create the vote record
-    const vote = new Vote({
-      candidateId,
-      keyHash
-    });
-    
-    await vote.save();
+    await votes.add(candidateId, keyHash);
     
     // Increment candidate vote count
-    await Candidate.findByIdAndUpdate(candidateId, {
-      $inc: { votes: 1 }
-    });
-    
-    // Update session total votes
-    await VotingSession.findByIdAndUpdate(session._id, {
-      $inc: { totalVotes: 1 }
-    });
+    await candidates.incrementVote(candidateId);
     
     res.json({
       success: true,
@@ -95,7 +78,7 @@ router.post('/cast', verifyVotingToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error(error);
+    console.error('Vote casting error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -106,20 +89,14 @@ router.post('/cast', verifyVotingToken, async (req, res) => {
 // Get voting results
 router.get('/results', async (req, res) => {
   try {
-    const Candidate = require('../models/Candidate');
-    const VotingSession = require('../models/VotingSession');
-    
-    const candidates = await Candidate.find().sort({ votes: -1 });
-    
-    // Use the same logic as the session-status endpoint
-    const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
-    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 });
-    
-    const sessionData = activeSession || latestSession;
+    const allCandidates = await candidates.getAll();
+    const activeSession = await sessions.getActive();
+    const allSessions = await sessions.getAll();
+    const sessionData = activeSession || (allSessions.length > 0 ? allSessions[allSessions.length - 1] : null);
     
     res.json({
       success: true,
-      candidates,
+      candidates: allCandidates.sort((a, b) => b.votes - a.votes),
       session: sessionData ? {
         _id: sessionData._id,
         isActive: sessionData.isActive,
@@ -139,12 +116,10 @@ router.get('/results', async (req, res) => {
   }
 });
 
-// Add a specific endpoint to check session status
+// Session status endpoint
 router.get('/session-status', async (req, res) => {
   try {
-    const VotingSession = require('../models/VotingSession');
-    
-    const activeSession = await VotingSession.findOne({ isActive: true });
+    const activeSession = await sessions.getActive();
     
     res.json({
       success: true,
@@ -153,7 +128,7 @@ router.get('/session-status', async (req, res) => {
     });
     
   } catch (error) {
-    console.error(error);
+    console.error('Session status error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
