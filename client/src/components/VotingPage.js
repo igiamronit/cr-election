@@ -36,7 +36,6 @@ const VotingPage = () => {
   const checkVotingSession = async () => {
   try {
     setSessionLoading(true);
-    // Use the dedicated session status endpoint instead of results
     const response = await axios.get('http://localhost:5000/api/session-status');
     
     console.log('Session check response:', response.data); // Debug log

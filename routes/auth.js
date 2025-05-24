@@ -38,26 +38,31 @@ router.post('/admin/login', async (req, res) => {
 // Validate voting key
 router.post('/validate-key', async (req, res) => {
   try {
-    const { votingKey } = req.body;
-    const VotingKey = require('../models/VotingKey');
+    const { key, votingKey } = req.body; // Accept both parameter names
+    const keyToValidate = key || votingKey; // Use whichever is provided
     
-    if (!votingKey || votingKey.length !== 32) {
+    console.log('Key validation request:', { key, votingKey, keyToValidate }); // Debug log
+    
+    if (!keyToValidate || keyToValidate.length !== 32) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid key format'
+        message: 'Invalid key format - key must be exactly 32 characters'
       });
     }
     
-    const key = await VotingKey.findOne({ key: votingKey });
+    const VotingKey = require('../models/VotingKey');
+    const foundKey = await VotingKey.findOne({ key: keyToValidate.trim() });
     
-    if (!key) {
+    console.log('Key lookup result:', foundKey ? 'Found' : 'Not found'); // Debug log
+    
+    if (!foundKey) {
       return res.status(404).json({
         success: false,
         message: 'Invalid voting key'
       });
     }
     
-    if (key.used) {
+    if (foundKey.used) {
       return res.status(400).json({
         success: false,
         message: 'This key has already been used'
@@ -66,7 +71,7 @@ router.post('/validate-key', async (req, res) => {
     
     // Generate a temporary token for voting
     const token = jwt.sign(
-      { keyId: key._id, votingKey: votingKey },
+      { keyId: foundKey._id, votingKey: keyToValidate },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -78,7 +83,7 @@ router.post('/validate-key', async (req, res) => {
     });
     
   } catch (error) {
-    console.error(error);
+    console.error('Key validation error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

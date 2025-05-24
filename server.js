@@ -38,7 +38,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// Add this to your routes in server.js or create a new route file
+// Update the session-status endpoint to be more consistent
 app.get('/api/session-status', async (req, res) => {
   try {
     const VotingSession = require('./models/VotingSession');
@@ -46,22 +46,19 @@ app.get('/api/session-status', async (req, res) => {
     // Find the most recent active session
     const activeSession = await VotingSession.findOne({ isActive: true }).sort({ createdAt: -1 });
     
-    // If no active session, get the latest session for reference
-    const latestSession = await VotingSession.findOne().sort({ createdAt: -1 });
-    
-    const sessionData = activeSession || latestSession;
+    console.log('Session status check - active session found:', !!activeSession); // Debug log
     
     res.json({
       success: true,
       isActive: !!activeSession,
-      session: sessionData ? {
-        _id: sessionData._id,
-        isActive: sessionData.isActive,
-        startTime: sessionData.startTime,
-        endTime: sessionData.endTime,
-        totalVotes: sessionData.totalVotes,
-        createdAt: sessionData.createdAt
-      } : null
+      session: activeSession ? {
+        _id: activeSession._id,
+        isActive: activeSession.isActive,
+        startTime: activeSession.startTime,
+        endTime: activeSession.endTime,
+        totalVotes: activeSession.totalVotes,
+        createdAt: activeSession.createdAt
+      } : { isActive: false }
     });
     
   } catch (error) {
@@ -69,8 +66,7 @@ app.get('/api/session-status', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      isActive: false,
-      session: null
+      isActive: false
     });
   }
 });
@@ -87,3 +83,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+

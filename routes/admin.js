@@ -175,7 +175,9 @@ router.post('/candidates', verifyAdmin, async (req, res) => {
 router.post('/voting-session', verifyAdmin, async (req, res) => {
   try {
     const { action } = req.body;
-    const VotingSession = require('../models/VotingSession');
+    const VotingSession = require('./models/VotingSession');
+    
+    console.log(`Voting session ${action} requested`); // Debug log
     
     if (action === 'start') {
       // First, end any existing active sessions
@@ -187,8 +189,6 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
         }
       );
       
-      console.log('Creating new voting session...'); // Debug log
-      
       // Create new session
       const newSession = new VotingSession({
         isActive: true,
@@ -198,7 +198,7 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
       
       await newSession.save();
       
-      console.log('New session created:', newSession); // Debug log
+      console.log('New voting session created:', newSession._id); // Debug log
       
       res.json({
         success: true,
@@ -221,7 +221,7 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
       activeSession.endTime = new Date();
       await activeSession.save();
       
-      console.log('Session stopped:', activeSession); // Debug log
+      console.log('Voting session stopped:', activeSession._id); // Debug log
       
       res.json({
         success: true,
@@ -237,7 +237,7 @@ router.post('/voting-session', verifyAdmin, async (req, res) => {
     }
     
   } catch (error) {
-    console.error('Voting session error:', error);
+    console.error('Voting session control error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
