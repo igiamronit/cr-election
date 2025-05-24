@@ -133,29 +133,35 @@ const VotingPage = () => {
   }
 
   if (!votingSession?.isActive) {
-    return (
-      <div className="container">
-        <div className="card">
-          <div className="header">
-            <h1>🗳️ Voting</h1>
-            <p>The voting session is currently not active</p>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <button onClick={() => navigate('/')} className="btn">
-              ← Back to Home
-            </button>
-            <button 
-              onClick={checkVotingSession} 
-              className="btn btn-secondary"
-              style={{ marginLeft: '10px' }}
-            >
-              🔄 Refresh Status
-            </button>
+  console.log('Voting session not active:', votingSession); // Debug log
+  
+  return (
+    <div className="container">
+      <div className="card">
+        <div className="header">
+          <h1>🗳️ Voting</h1>
+          <p>The voting session is currently not active</p>
+          {/* Add debug info */}
+          <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '10px' }}>
+            Debug: Session status = {JSON.stringify(votingSession)}
           </div>
         </div>
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={() => navigate('/')} className="btn">
+            ← Back to Home
+          </button>
+          <button 
+            onClick={checkVotingSession} 
+            className="btn btn-secondary"
+            style={{ marginLeft: '10px' }}
+          >
+            🔄 Refresh Status
+          </button>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // Rest of your component remains the same...
   return (
