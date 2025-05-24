@@ -1,240 +1,130 @@
-# Anonymous Voting Platform
+# Anonymous Voting Platform 🗳️
 
-A secure, anonymous voting system built with the MERN stack that supports 36 unique voter keys and up to 3 candidates.
+A simple anonymous voting system for class elections. Built for my college project using React + Node.js.
 
-## 🚀 Features
+## What it does
+- Creates 36 unique voting keys for students
+- Supports up to 3 candidates
+- Anonymous voting (no one knows who voted for whom)
+- Real-time results
+- Admin panel to control everything
 
-- **Anonymous Voting**: Secure voting system that maintains voter anonymity
-- **36 Unique Keys**: Each voter gets a unique 32-character voting key
-- **3 Candidate Support**: Host up to 3 candidates in an election
-- **Real-time Results**: Live vote counting and result display
-- **Admin Dashboard**: Complete administrative control panel
-- **Responsive Design**: Works on desktop and mobile devices
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React.js with React Router
-- **Backend**: Node.js with Express.js
-- **Database**: MongoDB with Mongoose
+## Tech Stack
+- **Frontend**: React.js (hosted on GitHub Pages)
+- **Backend**: Node.js + Express (hosted on Render)
+- **Database**: File storage (JSON files)
 - **Authentication**: JWT tokens
-- **Styling**: Custom CSS with modern design
 
-## 📋 Prerequisites
+## Quick Setup
 
-- Node.js (v14 or higher)
-- MongoDB (local or cloud instance)
-- npm or yarn package manager
-
-## 🔧 Installation
-
-1. **Clone the repository**
+1. **Clone the repo**
    ```bash
-   git clone <repository-url>
+   git clone <your-repo-url>
    cd anonymous-voting
    ```
 
-2. **Install backend dependencies**
+2. **Install dependencies**
    ```bash
    npm install
+   cd client && npm install && cd ..
    ```
 
-3. **Install frontend dependencies**
-   ```bash
-   cd client
-   npm install
-   cd ..
-   ```
-
-4. **Set up environment variables**
-   Create a `.env` file in the root directory:
+3. **Create .env file**
    ```env
-   MONGODB_URI=mongodb://localhost:27017/anonymous-voting
-   JWT_SECRET=your_super_secret_jwt_key_here_change_this_in_production
-   ADMIN_PASSWORD=admin123
+   JWT_SECRET=your_secret_key_here
+   ADMIN_PASSWORD=your_admin_password
    NODE_ENV=development
    PORT=5000
    ```
 
-5. **Start MongoDB**
-   Make sure MongoDB is running on your system
-
-## 🚀 Running the Application
-
-### Development Mode
-
-1. **Start the backend server**
+4. **Run the app**
    ```bash
+   # Backend
    npm run dev
-   ```
 
-2. **Start the frontend (in a new terminal)**
-   ```bash
+   # Frontend (new terminal)
    npm run client
    ```
 
-3. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+5. **Open browser**
+   - App: http://localhost:3000
+   - API: http://localhost:5000
 
-### Production Mode
+## How to Use
 
-1. **Build the frontend**
-   ```bash
-   npm run build
-   ```
+### For Admin:
+1. Go to `/admin` 
+2. Login with your admin credentials
+3. Generate 36 voting keys
+4. Add candidates (max 3)
+5. Start voting session
+6. Share keys with students
+7. Monitor results in real-time
 
-2. **Start the production server**
-   ```bash
-   npm start
-   ```
+### For Students:
+1. Go to main page
+2. Enter your unique voting key
+3. Select a candidate
+4. Vote!
+5. Check results page
 
-## 📖 Usage Guide
+## Live Demo
+- **Frontend**: https://igiamronit.github.io/cr-election
+- **Backend**: https://cr-election-uk6a.onrender.com
 
-### For Voters
+## Features
+- ✅ Completely anonymous voting
+- ✅ One vote per key
+- ✅ Real-time results
+- ✅ Mobile responsive
+- ✅ No database required (uses JSON files)
+- ✅ Easy deployment
 
-1. **Get Your Voting Key**: Receive a unique 32-character key from the administrator
-2. **Access Voting**: Go to the voting page and enter your key
-3. **Cast Vote**: Select your preferred candidate and submit
-4. **View Results**: Check the live results page anytime
-
-### For Administrators
-
-1. **Access Admin Panel**: Go to `/admin` and login with admin password
-2. **Generate Keys**: Create 36 unique voting keys for distribution
-3. **Set Up Candidates**: Add up to 3 candidates with names and descriptions
-4. **Control Voting**: Start/stop voting sessions as needed
-5. **Monitor Results**: View real-time statistics and vote counts
-
-## 🔐 Security Features
-
-- **One-time Keys**: Each voting key can only be used once
-- **Anonymous Votes**: Votes are stored with hashed keys, not original keys
-- **Secure Authentication**: JWT tokens for admin and voter sessions
-- **Data Validation**: Input validation on both frontend and backend
-
-## 🎨 System Architecture
-
+## Project Structure
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Client  │────│  Express API    │────│   MongoDB       │
-│   (Port 3000)   │    │  (Port 5000)    │    │   Database      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+anonymous-voting/
+├── client/                 # React frontend
+│   ├── src/
+│   ├── build/             # Built files for GitHub Pages
+│   └── package.json
+├── routes/                # API routes
+├── utils/                 # File storage utilities
+├── data/                  # JSON data files (auto-created)
+├── server.js              # Main server file
+└── package.json
 ```
 
-## 📊 Database Schema
+## Deployment
 
-### VotingKey
-- `key`: Unique 32-character string
-- `used`: Boolean flag
-- `usedAt`: Timestamp when used
+### Frontend (GitHub Pages)
+1. Build: `cd client && npm run build`
+2. Deploy: `npm run deploy`
 
-### Candidate
-- `name`: Candidate name
-- `description`: Candidate description
-- `position`: Display order (1-3)
-- `votes`: Vote count
+### Backend (Render)
+1. Connect GitHub repo to Render
+2. Set environment variables in Render dashboard
+3. Deploy
 
-### Vote
-- `candidateId`: Reference to candidate
-- `keyHash`: Hashed voting key (for anonymity)
-- `timestamp`: Vote submission time
+## Security Notes
+- Each voting key is 32 characters long
+- Keys are hashed when storing votes
+- Admin authentication required
+- No way to trace votes back to individuals
 
-### VotingSession
-- `isActive`: Session status
-- `startTime`: Session start time
-- `endTime`: Session end time
-- `totalVotes`: Total votes in session
+## Troubleshooting
 
-## 🚀 Deployment
+**500 errors?** 
+- Check if all routes use file storage instead of MongoDB
+- Verify environment variables are set
 
-### Heroku Deployment
+**CORS errors?**
+- Update server.js with correct frontend URLs
 
-1. **Create Heroku app**
-   ```bash
-   heroku create your-voting-app
-   ```
+**Keys not working?**
+- Make sure admin generated keys first
+- Check if voting session is active
 
-2. **Set environment variables**
-   ```bash
-   heroku config:set MONGODB_URI=your_mongodb_connection_string
-   heroku config:set JWT_SECRET=your_jwt_secret
-   heroku config:set ADMIN_PASSWORD=your_admin_password
-   ```
+## Made by
+Ronit Ranjan
 
-3. **Deploy**
-   ```bash
-   git push heroku main
-   ```
-
-### Local Production
-
-1. **Set NODE_ENV=production**
-2. **Use production MongoDB instance**
-3. **Change default admin password**
-4. **Use strong JWT secret**
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/anonymous-voting` |
-| `JWT_SECRET` | Secret key for JWT tokens | `your_super_secret_jwt_key_here_change_this_in_production` |
-| `ADMIN_PASSWORD` | Admin login password | `admin123` |
-| `NODE_ENV` | Environment mode | `development` |
-| `PORT` | Server port | `5000` |
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **MongoDB Connection Error**
-   - Ensure MongoDB is running
-   - Check connection string in `.env`
-   - Verify network connectivity
-
-2. **Frontend Can't Connect to Backend**
-   - Check if backend server is running on port 5000
-   - Verify CORS settings
-   - Check firewall settings
-
-3. **Admin Login Not Working**
-   - Verify admin password in `.env` file
-   - Check JWT secret configuration
-   - Clear browser localStorage
-
-### Reset System
-
-To reset all data (votes, keys, candidates):
-1. Login to admin dashboard
-2. Go to "Voting Session" tab
-3. Click "Reset All Data"
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the ISC License.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the troubleshooting section
-- Review the usage guide
-
-## 🔄 Future Enhancements
-
-- [ ] Email integration for key distribution
-- [ ] Multiple concurrent elections
-- [ ] Voter registration system
-- [ ] Enhanced analytics dashboard
-- [ ] Mobile app development
-- [ ] Blockchain integration for enhanced security
+Built with ❤️ and lots of chatgpt help!
