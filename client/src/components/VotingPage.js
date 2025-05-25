@@ -24,7 +24,7 @@ const VotingPage = () => {
 
   const fetchCandidates = async () => {
     try {
-      const response = await axios.get('cr-election-production.up.railway.app/api/candidates');
+      const response = await axios.get('https://cr-election-production.up.railway.app/api/candidates');
       if (response.data.success) {
         setCandidates(response.data.candidates);
       }
@@ -36,7 +36,7 @@ const VotingPage = () => {
   const checkVotingSession = async () => {
   try {
     setSessionLoading(true);
-    const response = await axios.get('cr-election-production.up.railway.app/api/session-status');
+    const response = await axios.get('https://cr-election-production.up.railway.app/api/session-status');
     
     console.log('Session check response:', response.data); // Debug log
     
@@ -70,7 +70,7 @@ const VotingPage = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('cr-election-production.up.railway.app/api/auth/validate-key', {
+      const response = await axios.post('https://cr-election-production.up.railway.app/api/auth/validate-key', {
         key: votingKey.trim() // Changed from votingKey to key to match backend
       });
 
@@ -96,7 +96,7 @@ const VotingPage = () => {
     try {
       const token = localStorage.getItem('votingToken');
       const response = await axios.post(
-        'cr-election-production.up.railway.app/api/votes/cast',
+        'https://cr-election-production.up.railway.app/api/votes/cast',
         { candidateId: selectedCandidate },
         { headers: { 'x-auth-token': token } }
       );

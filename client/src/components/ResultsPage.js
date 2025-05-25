@@ -17,7 +17,7 @@ const ResultsPage = () => {
 
   const fetchResults = async () => {
     try {
-      const response = await axios.get('cr-election-production.up.railway.app/api/votes/results');
+      const response = await axios.get('https://cr-election-production.up.railway.app/api/votes/results');
       setResults(response.data);
     } catch (error) {
       console.error('Error fetching results:', error);
