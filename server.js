@@ -12,7 +12,6 @@ app.use(cors({
   origin: [
     'https://igiamronit.github.io',
     'https://igiamronit.github.io/cr-election',
-    'https://cr-election-uk6a.onrender.com',
     'http://localhost:3000',
     'https://cr-election-production.up.railway.app'
   ],
