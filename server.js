@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { sessions } = require('./utils/fileStorage');
+const fs = require('fs');
+const path = require('path');
 
 dotenv.config();
 
@@ -35,6 +37,18 @@ try {
 // Basic health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
+});
+
+
+
+app.get('/debug/votes', (req, res) => {
+  const filePath = path.join(__dirname, 'data', 'votes.json');
+  try {
+    const data = fs.readFileSync(filePath, 'utf8');
+    res.send(JSON.parse(data));
+  } catch (err) {
+    res.status(500).send({ error: 'Could not read file', details: err.message });
+  }
 });
 
 // Session status endpoint
